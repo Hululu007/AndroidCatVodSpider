@@ -81,7 +81,7 @@ public class UCApi {
             for (String key : params.keySet()) {
                 for (String s : arr) {
                     if (s.toLowerCase().equals(key.toLowerCase())) {
-                        header.put(key, params.get(key));
+                        header.put(s, params.get(key));
                     }
                 }
 
