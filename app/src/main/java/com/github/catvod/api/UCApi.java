@@ -105,6 +105,7 @@ public class UCApi {
     private Object[] getM3u8(String url, Map header) {
         SpiderDebug.log("m3u8 url  :" + url);
         OkResult result = OkHttp.get(url, new HashMap<>(), header);
+        SpiderDebug.log("get m3u8 result  :" + result.getBody());
         String[] m3u8Arr = result.getBody().split("\n");
         List<String> listM3u8 = new ArrayList<>();
         Map<String, String> media = new HashMap<>();
