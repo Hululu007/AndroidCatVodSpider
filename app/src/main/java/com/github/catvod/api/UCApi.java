@@ -61,7 +61,7 @@ public class UCApi {
     public Object[] proxyVideo(Map<String, String> params) throws Exception {
 
         String category = params.get("cate");
-        Map header = new Gson().fromJson(Util.base64Decode(params.get("header")), Map.class);
+        Map header = new Gson().fromJson(Util.decodeUrl(Util.base64Decode(params.get("header"))), Map.class);
         //代理ts
         if ("m3u8".equals(category)) {
             String md5 = params.get("file");

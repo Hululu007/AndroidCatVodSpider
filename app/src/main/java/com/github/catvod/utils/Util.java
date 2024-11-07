@@ -11,11 +11,12 @@ import android.view.ViewGroup;
 import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
 import com.github.catvod.spider.Init;
 
 import java.math.BigInteger;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -349,6 +350,10 @@ public class Util {
             hexString.append(hex);
         }
         return hexString.toString();
+    }
+
+    public static String decodeUrl(String header) {
+        return URLDecoder.decode(header);
     }
 
 
