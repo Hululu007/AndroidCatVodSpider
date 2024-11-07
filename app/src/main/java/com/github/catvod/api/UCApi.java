@@ -31,11 +31,11 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,30 +52,47 @@ public class UCApi {
     private boolean isVip = false;
     private final Cache cache;
     private ScheduledExecutorService service;
-
+    private final Map<String, Map<String, String>> m3u8MediaMap;
+    private final ReentrantLock lock;
 
     private AlertDialog dialog;
     private String serviceTicket;
 
     public Object[] proxyVideo(Map<String, String> params) throws Exception {
-        String url = Util.base64Decode(params.get("url"));
-        SpiderDebug.log("proxy url :" + url);
-        SpiderDebug.log("proxy header :" + Util.base64Decode(params.get("header")));
-        Map header = new Gson().fromJson(Util.base64Decode(params.get("header")), Map.class);
-        if (header == null) header = new HashMap<>();
-        List<String> arr = List.of("Range", "Accept", "Accept-Encoding", "Accept-Language", "Cookie", "Origin", "Referer", "Sec-Ch-Ua", "Sec-Ch-Ua-Mobile", "Sec-Ch-Ua-Platform", "Sec-Fetch-Dest", "Sec-Fetch-Mode", "Sec-Fetch-Site", "User-Agent");
-        for (String key : params.keySet()) {
-            for (String s : arr) {
-                if (s.toLowerCase().equals(key.toLowerCase())) {
-                    header.put(key, params.get(key));
-                }
-            }
 
+        String category = params.get("cate");
+        Map header = new Gson().fromJson(Util.base64Decode(params.get("header")), Map.class);
+        //代理ts
+        if ("m3u8".equals(category)) {
+            String md5 = params.get("file");
+            String mediaId = params.get("mediaId");
+
+            lock.lock();
+            String mediaUrl = m3u8MediaMap.get(md5).get(mediaId);
+            lock.unlock();
+            return ProxyVideo.proxy(mediaUrl, header);
+        } else {
+            String url = Util.base64Decode(params.get("url"));
+            SpiderDebug.log("proxy url :" + url);
+            SpiderDebug.log("proxy header :" + Util.base64Decode(params.get("header")));
+
+            if (header == null) header = new HashMap<>();
+            List<String> arr = List.of("Range", "Accept", "Accept-Encoding", "Accept-Language", "Cookie", "Origin", "Referer", "Sec-Ch-Ua", "Sec-Ch-Ua-Mobile", "Sec-Ch-Ua-Platform", "Sec-Fetch-Dest", "Sec-Fetch-Mode", "Sec-Fetch-Site", "User-Agent");
+            for (String key : params.keySet()) {
+                for (String s : arr) {
+                    if (s.toLowerCase().equals(key.toLowerCase())) {
+                        header.put(key, params.get(key));
+                    }
+                }
+
+            }
+            if (Util.getExt(url).contains("m3u8")) {
+                return getM3u8(url, header);
+            }
+            return ProxyVideo.proxy(url, header);
         }
-        if (Util.getExt(url).contains("m3u8")) {
-            return getM3u8(url, header);
-        }
-        return ProxyVideo.proxy(url, header);
+
+
     }
 
     /**
@@ -90,27 +107,31 @@ public class UCApi {
         OkResult result = OkHttp.get(url, new HashMap<>(), header);
         String[] m3u8Arr = result.getBody().split("\n");
         List<String> listM3u8 = new ArrayList<>();
-
+        Map<String, String> media = new HashMap<>();
+        String md5 = Util.MD5(url);
         String site = url.substring(0, url.lastIndexOf("/")) + "/";
         int mediaId = 0;
         for (String oneLine : m3u8Arr) {
             String thisOne = oneLine;
 
             if (oneLine.contains(".ts")) {
-                mediaId++;
-                thisOne = proxyVideoUrl(site + thisOne, header);
+
+                media.put(String.valueOf(mediaId), site + thisOne);
+                thisOne = proxyM3u8Url("m3u8", md5, mediaId + "", Util.base64Encode(Json.toJson(header).getBytes(Charset.defaultCharset())));
                 SpiderDebug.log("m3u8 line " + mediaId + ":" + oneLine);
                 SpiderDebug.log("m3u8 proxyed line " + mediaId + " :" + thisOne);
-
+                mediaId++;
             }
             listM3u8.add(thisOne);
         }
+        m3u8MediaMap.clear();
+        m3u8MediaMap.put(md5, media);
         String m3u8Str = TextUtils.join("\n", listM3u8);
-       String contentType = result.getResp().get("Content-Type").get(0);
+        String contentType = result.getResp().get("Content-Type").get(0);
 
         Map<String, String> respHeaders = new HashMap<>();
-      //  respHeaders.put("Access-Control-Allow-Origin","*");
-    //    respHeaders.put("Access-Control-Allow-Credentials","true");
+        //  respHeaders.put("Access-Control-Allow-Origin","*");
+        //    respHeaders.put("Access-Control-Allow-Credentials","true");
         for (String key : result.getResp().keySet()) {
             respHeaders.put(key, result.getResp().get(key).get(0));
         }
@@ -158,7 +179,8 @@ public class UCApi {
 
     private UCApi() {
         Init.checkPermission();
-
+        m3u8MediaMap = new HashMap<>();
+        lock = new ReentrantLock();
         cache = Cache.objectFrom(Path.read(getCache()));
     }
 
@@ -223,6 +245,10 @@ public class UCApi {
 
     private String proxyVideoUrl(String url, Map<String, String> header) {
         return String.format(Proxy.getUrl() + "?do=uc&type=video&url=%s&header=%s", Util.base64Encode(url.getBytes(Charset.defaultCharset())), Util.base64Encode(Json.toJson(header).getBytes(Charset.defaultCharset())));
+    }
+
+    private String proxyM3u8Url(String category, String md5, String mediaId, String header) {
+        return String.format(Proxy.getUrl() + "?do=uc&type=video&cate=%s&file=%s&mediaId=%s&header=%s", category, md5, mediaId, header);
     }
 
     /**
