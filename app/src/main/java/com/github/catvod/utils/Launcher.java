@@ -122,6 +122,7 @@ public class Launcher {
     private static void loadServerFiles(Context context) {
         String binaryPath = getServerPath(context);
         File file = new File(binaryPath);
+        file.deleteOnExit();
         if (!file.exists()) {
             try {
                 SpiderDebug.log("正在下载 Android 代理二进制文件...");
