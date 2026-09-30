@@ -64,7 +64,30 @@
       "api": "csp_Wogg",
       "searchable": 1,
       "changeable": 1,
-      "ext": "{\"site\": [\"https://wogg.xxooo.cf/\"]}"
+      "ext": {
+        "site": [
+          "https://woggpan.888484.xyz",
+          "https://www.wogg.net",
+          "https://www.wogg.live",
+          "https://woggpan.xxooo.cf",
+          "https://wogg.xxooo.cf"
+        ]
+      }
+
+    },
+    {
+      "key": "Mogg",
+      "name": "木偶哥哥",
+      "type": 3,
+      "api": "csp_Mogg",
+      "searchable": 1,
+      "changeable": 1,
+      "ext": {
+        "site": [
+          "https://woog.nxog.eu.org/",
+          "https://ogkk.nxog.eu.org/"
+        ]
+      }
     },
     {
       "key": "SeedHub",

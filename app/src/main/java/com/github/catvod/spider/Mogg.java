@@ -36,7 +36,17 @@ public class Mogg extends Cloud {
 
     @Override
     public void init(Context context, String extend) throws Exception {
-        //  JsonObject ext = Json.safeObject(extend);
+        JsonObject ext = Json.safeObject(extend);
+        JsonArray siteList = ext.get("site").getAsJsonArray();
+        if (!siteList.isEmpty()) {
+            for (JsonElement jsonElement : siteList) {
+                String html = OkHttp.string(jsonElement.getAsString());
+                if (html.contains("电影")) {
+                    siteUrl = jsonElement.getAsString();
+                    break;
+                }
+            }
+        }
         super.init(context, extend);
     }
 
@@ -134,7 +144,7 @@ public class Mogg extends Cloud {
 
 
     private String searchContent(String key, String pg) {
-        String searchURL = siteUrl + String.format("/index.php/vod/search/page/%s/wd/%s.html", pg,URLEncoder.encode(key));
+        String searchURL = siteUrl + String.format("/index.php/vod/search/page/%s/wd/%s.html", pg, URLEncoder.encode(key));
         String html = OkHttp.string(searchURL, getHeader());
         Elements items = Jsoup.parse(html).select(".module-search-item");
         List<Vod> list = new ArrayList<>();
