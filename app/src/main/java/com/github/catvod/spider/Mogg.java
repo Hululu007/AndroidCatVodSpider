@@ -5,7 +5,11 @@ import com.github.catvod.bean.Class;
 import com.github.catvod.bean.Result;
 import com.github.catvod.bean.Vod;
 import com.github.catvod.net.OkHttp;
+import com.github.catvod.utils.Json;
 import com.github.catvod.utils.Util;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,7 +28,7 @@ import java.util.regex.Pattern;
  */
 public class Mogg extends Cloud {
 
-    private final String siteUrl = "https://woog.nxog.eu.org/";
+    private String siteUrl = "https://woog.nxog.eu.org/";
     private final Pattern regexCategory = Pattern.compile("index.php/vod/type/id/(\\w+).html");
     private final Pattern regexPageTotal = Pattern.compile("\\$\\(\"\\.mac_total\"\\)\\.text\\('(\\d+)'\\);");
 
